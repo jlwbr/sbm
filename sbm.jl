@@ -3,12 +3,16 @@ include("helpers.jl")
 include("lexer.jl")
 include("emulator.jl")
 
-using TOML
-export TOML
+function error(info, exit_code = -1, location = undef, std = stderr)
+    printstyled(std, "ERROR: ", color = :red)
+    println(std, info)
 
-function error(info, exit_code)
-    printstyled("ERROR: ", color = :red)
-    println(info)
+    if location !== undef
+        printstyled(std, "      @ ", color = :light_black)
+        printstyled(std, location, color = :light_black)
+        print(std, "\n")
+    end
+
     if exit_code >= 0
         exit(exit_code)
     end
@@ -32,12 +36,12 @@ elseif ARGS[1] == "sim"
         error("No source file given!", 1)
     end
 
-    file = open(ARGS[2], "r")
+    file = abspath(ARGS[2])
+
     tokens = lexer.tokenize_file(file)
-    close(file)
 
     @time emulator.emulate(lexer.parse(tokens))
 else
     println("Subcommand not found, help:")
     help()
-    end
+end

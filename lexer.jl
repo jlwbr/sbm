@@ -78,7 +78,33 @@ module lexer
                 end
 
                 if token_type == Main.KEYWORD
-                    if (value == Main.IF) | (value == Main.WHILE) | (value == Main.DO)
+                    if value == Main.MACRO
+                        macro_accumulator::Array{Main.Token} = []
+
+                        (test_type, _) = find_token_type(tokens[i + 1].Value)
+
+                        if test_type !== nothing
+                            error::String = "Lexer error, macro name " * tokens[i + 1].Value * " is a reserved word"
+                            Main.error(error , 1)
+                        end
+
+                        j = i + 2
+                        scope = 1
+                        while (j < length(tokens)) & (scope > 0)
+                            push!(macro_accumulator, tokens[j])
+                            
+                            if get(Main.TOKENS_REQUIRING_END, tokens[j + 1].Value, nothing) !== nothing
+                                scope += 1
+                            elseif tokens[j + 1].Value == "END"
+                                scope -= 1
+                            end
+
+                            j += 1
+                        end
+
+                        macro_stack[tokens[i + 1].Value] = parse(macro_accumulator, i)
+                        new_i = j + 1
+                    elseif (value == Main.IF) | (value == Main.WHILE) | (value == Main.DO) | (value == Main.MACRO)
                         push!(jump_stack, length(program))
                     elseif value == Main.END
                         jump_addr = pop_or_error(jump_stack, location)

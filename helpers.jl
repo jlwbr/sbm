@@ -1,5 +1,4 @@
 @enum Types begin
-    WORD
     INT
     STRING
     KEYWORD
@@ -7,6 +6,7 @@
 end
 
 @enum Keywords begin
+    MACRO
     IF
     ELSE
     WHILE
@@ -59,11 +59,18 @@ struct Lexeme
 end
 
 KEYWORD_BY_NAME = Dict(
+    "MACRO" => MACRO,
     "IF" => IF,
     "ELSE" => ELSE,
     "WHILE" => WHILE,
     "DO" => DO,
     "END" => END
+)
+
+TOKENS_REQUIRING_END = Dict(
+    "MACRO" => MACRO,
+    "IF" => IF,
+    "DO" => DO
 )
 
 INTRINSICS_BY_NAME = Dict(
