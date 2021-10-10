@@ -1,10 +1,11 @@
-# This program prints all values from 10 down to 0, printing if it is bigger than 5
+# This program prints all values from 10 down to 0, printing TRUW it is bigger than 5
 # Showing off most of the available operations in the process
 
+MACRO >5
+    5 > IF "TRUE" prints drop END
+END
+
 10 WHILE dup 1 >= DO
-    dup print
-    dup 5 > IF
-        " is larger than 5" prints drop
-    END
+    dup >5
     1 -
-END drop
+END
