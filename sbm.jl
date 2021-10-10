@@ -61,7 +61,7 @@ else
 
         tokens = lexer.tokenize_file(file)
 
-        @time emulator.emulate(lexer.parse(tokens, "debug"))
+        @time emulator.emulate(lexer.parse(tokens))
     else
         println("Subcommand $(args[1]) not found, help:")
         help()
