@@ -2,7 +2,6 @@
 include("helpers.jl")
 include("lexer.jl")
 include("emulator.jl")
-include("testing.jl")
 
 using TOML
 export TOML
@@ -39,14 +38,7 @@ elseif ARGS[1] == "run"
     close(file)
 
     @time emulator.emulate(lexer.parse(tokens))
-elseif ARGS[1] == "test"
-    if length(ARGS) < 2
-        error("No source folder given!", 1)
+else
+    println("Subcommand not found, help:")
+    help()
     end
-
-    if isdir(ARGS[2])
-        testing.test(ARGS[2], length(ARGS) > 2 ? ARGS[2:length(ARGS)] : undef)
-    else
-        error("source folder is not a directory!", 1)
-    end
-end
