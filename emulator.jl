@@ -21,8 +21,6 @@ module emulator
             op::Main.Lexeme = program[ip]
             new_ip::Int = ip + 1
 
-            # println("Current stack: ", stack)
-            # println("Running op: ", op)
             if op.Type == Main.INT
                 push!(stack, op.Value)
             elseif op.Type == Main.STRING
