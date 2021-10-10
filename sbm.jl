@@ -28,20 +28,42 @@ function help()
     println("   sim         Simulate program using the simulator.")
 end
 
-if length(ARGS) <= 0
-    help()
-elseif ARGS[1] == "sim"
+function parse_args(arguments::Core.Array{Core.String,1})
+    args::Array{String} = []
+    options::Array{String} = []
 
-    if length(ARGS) < 2
-        error("No source file given!", 1)
+    for arg in arguments
+        if only(arg[1]) == '-'
+            if only(arg[2]) == '-'
+                push!(options, arg[2:length(arg)])
+            else
+                push!(options, arg[1:length(arg)])
+            end
+        else
+            push!(args, arg)
+        end
     end
 
-    file = abspath(ARGS[2])
+    return (args, options)
+end
 
-    tokens = lexer.tokenize_file(file)
-
-    @time emulator.emulate(lexer.parse(tokens))
-else
-    println("Subcommand not found, help:")
+if length(ARGS) <= 0
     help()
+else
+    (args, options) = parse_args(ARGS)
+
+    if args[1] == "sim"
+        if length(args) < 2
+            error("No source file given!", 1)
+        end
+
+        file = abspath(args[2])
+
+        tokens = lexer.tokenize_file(file)
+
+        @time emulator.emulate(lexer.parse(tokens, "debug"))
+    else
+        println("Subcommand $(args[1]) not found, help:")
+        help()
+    end
 end
