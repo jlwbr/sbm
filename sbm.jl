@@ -3,6 +3,8 @@ include("helpers.jl")
 include("lexer.jl")
 include("emulator.jl")
 
+import Dates
+
 function error(info, exit_code = -1, location = undef, std = stderr)
     printstyled(std, "ERROR: ", color = :red)
     println(std, info)
@@ -19,13 +21,17 @@ function error(info, exit_code = -1, location = undef, std = stderr)
 end
 
 function help()
-    println(" ___ ___ __  __ ")
-    println("/ __| _ )  \\/  |")
-    println("\\__ \\ _ \\ |\\/| |")
-    println("|___/___/_|  |_|")
-    println("")
-    println("ARUMENTS:")
-    println("   sim         Simulate program using the simulator.")
+    str = sprint() do io
+        println(io, " ___ ___ __  __ ")
+        println(io, "/ __| _ )  \\/  |")
+        println(io, "\\__ \\ _ \\ |\\/| |")
+        println(io, "|___/___/_|  |_|")
+        print(io, "\n")
+        println(io, "ARUMENTS:")
+        println(io, "   sim         Simulate program using the simulator.")
+    end
+
+    print(str)
 end
 
 function parse_args(arguments::Core.Array{Core.String,1})
@@ -47,23 +53,38 @@ function parse_args(arguments::Core.Array{Core.String,1})
     return (args, options)
 end
 
-if length(ARGS) <= 0
-    help()
-else
-    (args, options) = parse_args(ARGS)
-
-    if args[1] == "sim"
-        if length(args) < 2
-            error("No source file given!", 1)
-        end
-
-        file = abspath(args[2])
-
-        tokens = lexer.tokenize_file(file)
-
-        @time emulator.emulate(lexer.parse(tokens))
-    else
-        println("Subcommand $(args[1]) not found, help:")
+function main()
+    if length(ARGS) <= 0
         help()
-    end
+    else
+        (args, options) = parse_args(ARGS)
+    
+        if args[1] == "sim"
+            if length(args) < 2
+                error("No source file given!", 1)
+            end
+    
+            run(`clear`)
+            
+            print("Simulation started at ")
+            printstyled(Dates.format(Dates.now(), "HH:MM on d-m-yyyy"), color = :green)
+            println()
+    
+            file = abspath(args[2])
+    
+            tokens = lexer.tokenize_file(file)
+
+            stats = @timed emulator.emulate(lexer.parse(tokens))
+            size = displaysize(stdout)
+
+            print("\e[$(size[1] - 1);1H")
+            println("Simulation exited succesfully, took: $(stats.time), gc time: $(stats.gctime)")
+            
+        else
+            println("Subcommand $(args[1]) not found, help:")
+            help()
+        end
+    end 
 end
+
+main()
