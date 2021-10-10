@@ -21,13 +21,12 @@ function help()
     println("|___/___/_|  |_|")
     println("")
     println("ARUMENTS:")
-    println("   run         Run program using the simulator.")
-    println("   test        Test program or folder using the simulator.")
+    println("   sim         Simulate program using the simulator.")
 end
 
 if length(ARGS) <= 0
     help()
-elseif ARGS[1] == "run"
+elseif ARGS[1] == "sim"
 
     if length(ARGS) < 2
         error("No source file given!", 1)
