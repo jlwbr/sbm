@@ -1,29 +1,30 @@
 module lexer
 
-    function pop_or_error(Array)
+    function pop_or_error(Array, location::Main.Location)
         if size(Array, 1) < 1
-            Main.error("Lexer error, Block closure tag without corresponding opening tag", 1)
+            Main.error("Lexer error, Block closure tag without corresponding opening tag", 1, location)
         end
 
         pop!(Array)
     end
 
-    function tokenize_file(file::IO)
-        lines = readlines(file, )
-        tokens::Array{String} = []
+    function tokenize_file(file::AbstractString)
+        lines = readlines(file)
+        tokens::Array{Main.Token} = []
+        
 
-        for line in lines
+        for (n, line) in enumerate(lines)
             low::Int = 1
 
             for (column, character) in enumerate(line)
                 if column == length(line)
-                    push!(tokens, line[low:column])
+                    push!(tokens, Main.Token(line[low:column], Main.Location(file, n, column)))
                 elseif isspace(only(character))
-                    push!(tokens, line[low:(column - 1)])
+                    push!(tokens, Main.Token(line[low:(column - 1)],  Main.Location(file, n, column)))
                     low = column + 1
                 elseif only(character) == '\"'
-                    push!(tokens, line[low:(column - 1)])
-                    push!(tokens, "\"")
+                    push!(tokens, Main.Token(line[low:(column - 1)],  Main.Location(file, n, column)))
+                    push!(tokens, Main.Token("\"",  Main.Location(file, n, column)))
                     low = column + 1
                 elseif only(character) == '#'
                     break
@@ -31,7 +32,7 @@ module lexer
             end
         end
 
-        return [s for s in tokens if !isempty(s)]
+        return [s for s in tokens if !isempty(s.Value)]
     end
 
     function find_token_type(token::String)
@@ -47,49 +48,61 @@ module lexer
         return (nothing, nothing)
     end
 
-    function parse(tokens::Array{String})
-        program::Array{Main.Token} = []
+    function parse(tokens::Array{Main.Token}, jump_stack_offset::Int = 0)
+        program::Array{Main.Lexeme} = []
+        macro_stack::Dict{String, Array{Main.Lexeme}} = Dict()
         jump_stack::Array{Int} = []
 
-        parsing_string::Bool = false
-        string_accumulator::Array{String} = []
-        for token in tokens
+        i = 1
+        while i <= length(tokens)
+            new_i = i + 1
+            token::String = tokens[i].Value
+            location::Main.Location = tokens[i].location
             (token_type, value) = find_token_type(token)
 
             if token == "\""
-                if parsing_string
-                    string::String = join(string_accumulator, " ")
-                    push!(program, Main.Token(Main.STRING, string, string, missing))
+                string_accumulator::Array{String} = []
+
+                j = i + 1
+                while (j < length(tokens)) & (tokens[j].Value != "\"")
+                    push!(string_accumulator, tokens[j].Value)
+                    j += 1
                 end
                 
-                parsing_string = !parsing_string
-            elseif parsing_string
-                push!(string_accumulator, token)
+                string::String = join(string_accumulator, " ")
+                push!(program, Main.Lexeme(Main.STRING, string, string, missing, location))
+                new_i = j + 1
             elseif token_type !== nothing
-                push!(program, Main.Token(token_type, token, value, missing))
+                if value !== Main.MACRO
+                    push!(program, Main.Lexeme(token_type, token, value, missing, location))
+                end
 
                 if token_type == Main.KEYWORD
                     if (value == Main.IF) | (value == Main.WHILE) | (value == Main.DO)
                         push!(jump_stack, length(program))
                     elseif value == Main.END
-                        jump_addr = pop_or_error(jump_stack)
+                        jump_addr = pop_or_error(jump_stack, location)
                         loc = program[jump_addr]
 
-                        program[jump_addr] = Main.Token(loc.Type, loc.Text, loc.Value, length(program))
+                        program[jump_addr] = Main.Lexeme(loc.Type, loc.Text, loc.Value, jump_stack_offset + length(program), loc.location)
                         if loc.Value == Main.DO
-                            while_addr = pop_or_error(jump_stack)
+                            while_addr = pop_or_error(jump_stack, location)
                             loc = program[length(program)]
-                            program[length(program)] = Main.Token(loc.Type, loc.Text, loc.Value, while_addr)
+                            program[length(program)] = Main.Lexeme(loc.Type, loc.Text, loc.Value, while_addr, loc.location)
                         end
                     elseif value == Main.ELSE
-                        jump_addr = pop_or_error(jump_stack)
+                        jump_addr = pop_or_error(jump_stack, location)
                         loc = program[jump_addr]
 
-                        program[jump_addr] = Main.Token(loc.Type, loc.Text, loc.Value, length(program))
+                        program[jump_addr] = Main.Lexeme(loc.Type, loc.Text, loc.Value, jump_stack_offset + length(program), loc.location)
                         push!(jump_stack, length(program))
                     end
                 end
+            elseif get(macro_stack, token, nothing) !== nothing
+                program = [program; macro_stack[token]]
             end
+            
+            i = new_i
         end
 
         return program

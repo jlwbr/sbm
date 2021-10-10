@@ -36,11 +36,26 @@ end
     PRINTS
 end
 
+
+struct Location
+    File::String
+    Line::Int
+    Column::Int
+  end
+
 struct Token
+    Value::String
+    location::Location
+end
+
+Base.show(io::IO, l::Location) = print(io, "$(l.File):$(l.Line):$(l.Column)")
+
+struct Lexeme
     Type::Types
     Text::String
     Value::Union{Int, String, Intrinsics, Keywords}
     jump_loc::Union{Int, Missing}
+    location::Location
 end
 
 KEYWORD_BY_NAME = Dict(
