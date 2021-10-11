@@ -64,13 +64,17 @@ function main()
                 error("No source file given!", 1)
             end
     
+            file = abspath(args[2])
+
+            if !isfile(file)
+                error("opening file $(file): No such file or directory", 1)
+            end
+            
             run(`clear`)
             
             print("Simulation started at ")
             printstyled(Dates.format(Dates.now(), "HH:MM on d-m-yyyy"), color = :green)
             println()
-    
-            file = abspath(args[2])
     
             tokens = lexer.tokenize_file(file)
 
