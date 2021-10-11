@@ -17,14 +17,17 @@ module lexer
             low::Int = 1
 
             for (column, character) in enumerate(line)
-                if column == length(line)
-                    push!(tokens, Main.Token(line[low:column], Main.Location(file, n, column)))
-                elseif isspace(only(character))
-                    push!(tokens, Main.Token(line[low:(column - 1)],  Main.Location(file, n, column)))
-                    low = column + 1
-                elseif only(character) == '\"'
-                    push!(tokens, Main.Token(line[low:(column - 1)],  Main.Location(file, n, column)))
+                if only(character) == '\"'
+                    if !isempty(line[low:column - 1])
+                        push!(tokens, Main.Token(line[low:column - 1], Main.Location(file, n, column)))
+                    end
+
                     push!(tokens, Main.Token("\"",  Main.Location(file, n, column)))
+                    low = column + 1
+                elseif column == length(line) && !isempty(line[low:column])
+                    push!(tokens, Main.Token(line[low:column], Main.Location(file, n, column)))
+                elseif isspace(only(character)) && !isempty(line[low:column - 1])
+                    push!(tokens, Main.Token(line[low:(column - 1)],  Main.Location(file, n, column)))
                     low = column + 1
                 elseif only(character) == '#'
                     break
@@ -32,7 +35,7 @@ module lexer
             end
         end
 
-        return [s for s in tokens if !isempty(s.Value)]
+        return tokens
     end
 
     function find_token_type(token::String)
