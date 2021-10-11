@@ -6,6 +6,7 @@
 end
 
 @enum Keywords begin
+    IMPORT
     MACRO
     IF
     ELSE
@@ -60,6 +61,7 @@ end
 
 const KEYWORD_BY_NAME = Dict(
     "MACRO" => MACRO,
+    "IMPORT" => IMPORT,
     "IF" => IF,
     "ELSE" => ELSE,
     "WHILE" => WHILE,
@@ -94,3 +96,17 @@ const INTRINSICS_BY_NAME = Dict(
     "print" => PRINT,
     "prints" => PRINTS
 )
+
+const EXTENSION = ".sbm"
+
+function check_file(file)
+    file_path = abspath(file)
+
+    if isfile(file_path * Main.EXTENSION)
+        file_path = file_path * Main.EXTENSION
+    elseif !isfile(file_path)
+        error("opening file $(file_path): No such file or directory", 1)
+    end
+
+    return file_path
+end

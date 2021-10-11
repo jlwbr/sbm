@@ -64,11 +64,7 @@ function main()
                 error("No source file given!", 1)
             end
     
-            file = abspath(args[2])
-
-            if !isfile(file)
-                error("opening file $(file): No such file or directory", 1)
-            end
+            file = check_file(args[2])
             
             run(`clear`)
             

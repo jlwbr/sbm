@@ -76,19 +76,30 @@ module lexer
                 push!(program, Main.Lexeme(Main.STRING, string, string, missing, location))
                 new_i = j + 1
             elseif token_type !== nothing
-                if value !== Main.MACRO
+                if (value !== Main.MACRO) && (value !== Main.KEYWORD)
                     push!(program, Main.Lexeme(token_type, token, value, missing, location))
                 end
 
                 if token_type == Main.KEYWORD
-                    if value == Main.MACRO
+                    if value == Main.IMPORT
+                        if tokens[i + 1].Value !== "\""
+                            Main.error("Lexer error, expected \", found $(tokens[i + 1])" , 1, location)
+                        end
+
+                        cd(dirname(location.File))
+                        file = Main.check_file(tokens[i + 2].Value)
+                        
+                        imported_program::Array{Main.Lexeme} = parse(tokenize_file(file))
+                        program = [program; imported_program]
+
+                        new_i = i + 4
+                    elseif value == Main.MACRO
                         macro_accumulator::Array{Main.Token} = []
 
                         (test_type, _) = find_token_type(tokens[i + 1].Value)
 
                         if test_type !== nothing
-                            error::String = "Lexer error, macro name " * tokens[i + 1].Value * " is a reserved word"
-                            Main.error(error , 1)
+                            Main.error("Lexer error, macro name $(tokens[i + 1].Value) is a reserved word", 1, location)
                         end
 
                         j = i + 2
