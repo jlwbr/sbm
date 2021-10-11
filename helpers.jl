@@ -58,7 +58,7 @@ struct Lexeme
     location::Location
 end
 
-KEYWORD_BY_NAME = Dict(
+const KEYWORD_BY_NAME = Dict(
     "MACRO" => MACRO,
     "IF" => IF,
     "ELSE" => ELSE,
@@ -67,13 +67,13 @@ KEYWORD_BY_NAME = Dict(
     "END" => END
 )
 
-TOKENS_REQUIRING_END = Dict(
+const TOKENS_REQUIRING_END = Dict(
     "MACRO" => MACRO,
     "IF" => IF,
     "DO" => DO
 )
 
-INTRINSICS_BY_NAME = Dict(
+const INTRINSICS_BY_NAME = Dict(
     "+" => PLUS,
     "-" => MIN,
     "/" => DIV,
